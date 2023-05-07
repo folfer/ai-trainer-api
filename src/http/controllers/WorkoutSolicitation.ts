@@ -40,7 +40,7 @@ export async function WorkoutSolicitation(request: FastifyRequest, reply: Fastif
 
   const question = `Sou personal trainer especialista em musculação,
   quero passar um plano de exercícios para meu aluno e os 
-  dados dele são: peso ${weight} kg, altura ${height}m, ${translatedGender}, tem 29% de gordura, 
+  dados dele são: idade ${age}, peso ${weight} kg, altura ${height}m, ${translatedGender}, tem 29% de gordura, 
   os objetivos é ${translatedGoal}, 
   não é fumante, não tem colesterol alto, 
   não tem problema cardiovascular, não tem problema respiratório, 
@@ -60,9 +60,21 @@ export async function WorkoutSolicitation(request: FastifyRequest, reply: Fastif
 
   const result = response.data.choices[0].message!.content
 
-  await workoutSolicitationUseCase.execute({
-    data: { age, weight, height, gender, goal, result },
+  const responseFormatted = await openai.createChatCompletion({
+    model: 'gpt-3.5-turbo',
+    messages: [
+      {
+        role: 'user',
+        content: `Consegue me gerar um json bem detalhado desse item: ${result}`,
+      },
+    ],
   })
 
-  return reply.status(200).send({ result, question })
+  const resultFormatted = responseFormatted.data.choices[0].message!.content
+
+  // await workoutSolicitationUseCase.execute({
+  //   data: { age, weight, height, gender, goal, result },
+  // })
+
+  return reply.status(200).send({ result, resultFormatted })
 }
