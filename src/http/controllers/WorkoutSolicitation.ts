@@ -17,21 +17,43 @@ export async function WorkoutSolicitation(request: FastifyRequest, reply: Fastif
     height: z.number(),
     gender: z.enum(['Male', 'Female']),
     goal: z.enum(['hypertrophy', 'slimming']),
-    message: z.string(),
   })
 
-  const { age, weight, height, gender, goal, message } = workoutSolicitationBodySchema.parse(
-    request.body
-  )
+  const { age, weight, height, gender, goal } = workoutSolicitationBodySchema.parse(request.body)
+
+  let translatedGender
+  let translatedGoal
+
+  if (goal === 'hypertrophy') {
+    translatedGoal = 'hipertrofia'
+  } else {
+    translatedGoal = 'emagrecimento'
+  }
+
+  if (gender === 'Male') {
+    translatedGender = 'homem'
+  } else {
+    translatedGender = 'mulher'
+  }
 
   const workoutSolicitationUseCase = MakeWorkoutSolicitationUseCase()
+
+  const question = `Sou personal trainer especialista em musculação,
+  quero passar um plano de exercícios para meu aluno e os 
+  dados dele são: peso ${weight} kg, altura ${height}m, ${translatedGender}, tem 29% de gordura, 
+  os objetivos é ${translatedGoal}, 
+  não é fumante, não tem colesterol alto, 
+  não tem problema cardiovascular, não tem problema respiratório, 
+  não tem diabtes, não tem disfunção ortopédica e faz uso de suplementos termogênicos, 
+  não pratica atividade física, 
+  você poderia me passar uma tabela de treino abc de acordo com esses dados?`
 
   const response = await openai.createChatCompletion({
     model: 'gpt-3.5-turbo',
     messages: [
       {
         role: 'user',
-        content: `${message}`,
+        content: question,
       },
     ],
   })
@@ -42,5 +64,5 @@ export async function WorkoutSolicitation(request: FastifyRequest, reply: Fastif
     data: { age, weight, height, gender, goal, result },
   })
 
-  return reply.status(200).send({ result })
+  return reply.status(200).send({ result, question })
 }
