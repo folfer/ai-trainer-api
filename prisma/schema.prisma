@@ -15,9 +15,6 @@ model User {
   name          String
   email         String   @unique
   password_hash String
-  age           Int
-  height        Float
-  gender        String
   created_at    DateTime @default(now())
 
   @@map("users")
