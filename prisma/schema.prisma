@@ -27,7 +27,7 @@ model WorkoutSolicitation {
   weight     Float
   gender     String
   goal       String
-  result     String?
+  result     String
   created_at DateTime @default(now())
 
   @@map("workout-solicitations")

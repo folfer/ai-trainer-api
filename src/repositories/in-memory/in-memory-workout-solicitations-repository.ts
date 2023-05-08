@@ -7,13 +7,13 @@ export class InMemoryWorkoutSolicitationsRepository implements WorkoutSolicitati
 
   async create(data: Prisma.WorkoutSolicitationCreateInput) {
     const workoutSolicitation = {
-      id: data.id ? data.id : randomUUID(),
+      id: randomUUID(),
       age: data.age,
       height: data.height,
       weight: data.weight,
       gender: data.gender,
       goal: data.goal,
-      result: data.result ? data.result : '',
+      result: data.result,
       created_at: new Date(),
     }
 
