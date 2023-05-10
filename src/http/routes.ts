@@ -1,13 +1,16 @@
 import { FastifyInstance } from 'fastify'
-import { WorkoutSolicitation } from './controllers/WorkoutSolicitation'
+import { WorkoutSolicitation } from './controllers/workoutSolicitation'
 import { authenticate } from './controllers/authenticate'
 import { register } from './controllers/register'
 import { verifyJWT } from './middlewares/verify-jwt'
+import { DietSolicitation } from './controllers/dietSolicitation'
 
 export async function appRoutes(app: FastifyInstance) {
   app.post('/users', register)
 
   app.post('/sessions', authenticate)
 
-  app.post('/solicitations', { onRequest: [verifyJWT] }, WorkoutSolicitation)
+  app.post('/workouts', { onRequest: [verifyJWT] }, WorkoutSolicitation)
+
+  app.post('/diets', { onRequest: [verifyJWT] }, DietSolicitation)
 }

@@ -32,3 +32,26 @@ model WorkoutSolicitation {
 
   @@map("workout-solicitations")
 }
+
+model DietSolicitation {
+  id                  String   @id @default(uuid())
+  age                 Int
+  height              Float
+  weight              Float
+  body_fat            Float?
+  allergy             String?
+  lactose_intolerance Boolean
+  gluten_intolerance  Boolean
+  diabetes            Boolean
+  hypertension        Boolean
+  gastritis           Boolean
+  cholesterol         Float
+  smoker              Boolean
+  vegan               Boolean
+  gender              String
+  goal                String
+  result              String
+  created_at          DateTime @default(now())
+
+  @@map("diet-solicitations")
+}
