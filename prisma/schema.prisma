@@ -55,3 +55,23 @@ model DietSolicitation {
 
   @@map("diet-solicitations")
 }
+
+model CardioSolicitation {
+  id                      String   @id @default(uuid())
+  age                     Int
+  height                  Float
+  weight                  Float
+  cholesterol             Float
+  diabetes                Boolean
+  hypertension            Boolean
+  smoker                  Boolean
+  orthopedic_disfunction  String
+  respiratory_disfunction String
+  cardio_disfunction      String
+  gender                  String
+  goal                    String
+  result                  String
+  created_at              DateTime @default(now())
+
+  @@map("cardio-solicitations")
+}

@@ -19,6 +19,8 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
       password,
     })
 
+    Reflect.deleteProperty(user, 'password_hash')
+
     const token = await reply.jwtSign(
       {},
       {
@@ -28,7 +30,7 @@ export async function authenticate(request: FastifyRequest, reply: FastifyReply)
       }
     )
 
-    return reply.status(200).send({ token })
+    return reply.status(200).send({ user, token })
   } catch (err) {
     if (err instanceof InvalidCredentialsError) {
       return reply.status(409).send({ message: err.message })
