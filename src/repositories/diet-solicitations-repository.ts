@@ -1,5 +1,6 @@
-import { Prisma, DietSolicitation } from '@prisma/client'
+import { DietSolicitation, Prisma } from '@prisma/client'
 
 export interface DietSolicitationsRepository {
-  create(data: Prisma.DietSolicitationCreateInput): Promise<DietSolicitation>
+  create(data: Prisma.DietSolicitationUncheckedCreateInput): Promise<DietSolicitation>
+  readByYoungest(userId: string): Promise<DietSolicitation[]>
 }
