@@ -1,3 +1,4 @@
+import { env } from '@/env'
 import { MakeWorkoutSolicitationUseCase } from '@/use-cases/factories/make-workout-solicitation-use-case'
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { Configuration, OpenAIApi } from 'openai'
@@ -5,7 +6,7 @@ import { z } from 'zod'
 
 const configuration = new Configuration({
   organization: 'org-GS5lh0UtOYhBD8NXXv8XMWvU',
-  apiKey: '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',
+  apiKey: env.GPT_API_KEY,
 })
 
 const openai = new OpenAIApi(configuration)
@@ -60,21 +61,10 @@ export async function WorkoutSolicitation(request: FastifyRequest, reply: Fastif
 
   const result = response.data.choices[0].message!.content
 
-  const responseFormatted = await openai.createChatCompletion({
-    model: 'gpt-3.5-turbo',
-    messages: [
-      {
-        role: 'user',
-        content: `Consegue me gerar um json bem detalhado desse item: ${result}`,
-      },
-    ],
-  })
+   await workoutSolicitationUseCase.execute({
+     data: { age, weight, height, gender, goal, result, user_id: request.user.sub
+     },
+   })
 
-  const resultFormatted = responseFormatted.data.choices[0].message!.content
-
-  // await workoutSolicitationUseCase.execute({
-  //   data: { age, weight, height, gender, goal, result },
-  // })
-
-  return reply.status(200).send({ result, resultFormatted })
+  return reply.status(200).send({ result })
 }
