@@ -9,6 +9,7 @@ interface WorkoutSolicitationUseCaseRequest {
     gender: 'Male' | 'Female'
     goal: 'hypertrophy' | 'slimming'
     result: string
+    user_id: string
   }
 }
 

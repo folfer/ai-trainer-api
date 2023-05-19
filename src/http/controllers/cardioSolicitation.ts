@@ -1,3 +1,4 @@
+import { env } from '@/env'
 import { MakeCardioSolicitationUseCase } from '@/use-cases/factories/make-cardio-solicitation-use-case'
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { Configuration, OpenAIApi } from 'openai'
@@ -5,7 +6,7 @@ import { z } from 'zod'
 
 const configuration = new Configuration({
   organization: 'org-GS5lh0UtOYhBD8NXXv8XMWvU',
-  apiKey: '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',
+  apiKey: env.GPT_API_KEY,
 })
 
 const openai = new OpenAIApi(configuration)
@@ -99,6 +100,7 @@ export async function CardioSolicitation(request: FastifyRequest, reply: Fastify
       gender,
       goal,
       result,
+      user_id: request.user.sub
     },
   })
 

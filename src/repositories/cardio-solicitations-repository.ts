@@ -1,5 +1,7 @@
-import { Prisma, CardioSolicitation } from '@prisma/client'
+import { CardioSolicitation, Prisma } from '@prisma/client'
 
 export interface CardioSolicitationsRepository {
-  create(data: Prisma.CardioSolicitationCreateInput): Promise<CardioSolicitation>
+  create(data: Prisma.CardioSolicitationUncheckedCreateInput): Promise<CardioSolicitation>
+  readByYoungest(userId: string): Promise<CardioSolicitation[]>
+
 }

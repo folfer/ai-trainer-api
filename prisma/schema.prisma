@@ -11,11 +11,14 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(uuid())
-  name          String
-  email         String   @unique
-  password_hash String
-  created_at    DateTime @default(now())
+  id                   String                @id @default(uuid())
+  name                 String
+  email                String                @unique
+  password_hash        String
+  created_at           DateTime              @default(now())
+  workoutSolicitations WorkoutSolicitation[]
+  dietSolicitations    DietSolicitation[]
+  cardioSolicitations  CardioSolicitation[]
 
   @@map("users")
 }
@@ -29,6 +32,9 @@ model WorkoutSolicitation {
   goal       String
   result     String
   created_at DateTime @default(now())
+
+  user    User   @relation(fields: [user_id], references: [id])
+  user_id String
 
   @@map("workout-solicitations")
 }
@@ -53,6 +59,9 @@ model DietSolicitation {
   result              String
   created_at          DateTime @default(now())
 
+  user    User   @relation(fields: [user_id], references: [id])
+  user_id String
+
   @@map("diet-solicitations")
 }
 
@@ -72,6 +81,9 @@ model CardioSolicitation {
   goal                    String
   result                  String
   created_at              DateTime @default(now())
+
+  user    User   @relation(fields: [user_id], references: [id])
+  user_id String
 
   @@map("cardio-solicitations")
 }
