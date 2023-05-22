@@ -11,27 +11,50 @@ datasource db {
 }
 
 model User {
-  id                   String                @id @default(uuid())
-  name                 String
-  email                String                @unique
-  password_hash        String
-  created_at           DateTime              @default(now())
-  workoutSolicitations WorkoutSolicitation[]
-  dietSolicitations    DietSolicitation[]
-  cardioSolicitations  CardioSolicitation[]
+  id                      String                @id @default(uuid())
+  name                    String
+  email                   String                @unique
+  password_hash           String
+  age                     Int
+  height                  Float
+  weight                  Float
+  gender                  String
+  level                   String
+  smoker                  Boolean
+  diabetes                Boolean
+  physicalActivity        Boolean
+  lactose_intolerance     Boolean
+  gluten_intolerance      Boolean
+  gastritis               Boolean
+  cholesterol             Float
+  goal                    String
+  body_fat                Float?
+  allergy                 String?
+  diet_price              String
+  orthopedic_disfunction  String
+  respiratory_disfunction String
+  cardio_disfunction      String
+  created_at              DateTime              @default(now())
+  workoutSolicitations    WorkoutSolicitation[]
+  dietSolicitations       DietSolicitation[]
+  cardioSolicitations     CardioSolicitation[]
 
   @@map("users")
 }
 
 model WorkoutSolicitation {
-  id         String   @id @default(uuid())
-  age        Int
-  height     Float
-  weight     Float
-  gender     String
-  goal       String
-  result     String
-  created_at DateTime @default(now())
+  id               String   @id @default(uuid())
+  age              Int
+  height           Float
+  weight           Float
+  gender           String
+  goal             String
+  result           String
+  level            String
+  smoker           Boolean
+  diabetes         Boolean
+  physicalActivity Boolean
+  created_at       DateTime @default(now())
 
   user    User   @relation(fields: [user_id], references: [id])
   user_id String
@@ -53,9 +76,9 @@ model DietSolicitation {
   gastritis           Boolean
   cholesterol         Float
   smoker              Boolean
-  vegan               Boolean
   gender              String
   goal                String
+  diet_price          String
   result              String
   created_at          DateTime @default(now())
 
@@ -72,7 +95,6 @@ model CardioSolicitation {
   weight                  Float
   cholesterol             Float
   diabetes                Boolean
-  hypertension            Boolean
   smoker                  Boolean
   orthopedic_disfunction  String
   respiratory_disfunction String
@@ -80,6 +102,7 @@ model CardioSolicitation {
   gender                  String
   goal                    String
   result                  String
+  level                   String
   created_at              DateTime @default(now())
 
   user    User   @relation(fields: [user_id], references: [id])

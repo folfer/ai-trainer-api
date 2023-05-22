@@ -1,31 +1,26 @@
-import { env } from '@/env'
-import { MakeCardioSolicitationUseCase } from '@/use-cases/factories/make-cardio-solicitation-use-case'
-import { FastifyReply, FastifyRequest } from 'fastify'
-import { Configuration, OpenAIApi } from 'openai'
-import { z } from 'zod'
+import { env } from "@/env";
+import { MakeCardioSolicitationUseCase } from "@/use-cases/factories/make-cardio-solicitation-use-case";
+import { makeReadUserUseCase } from "@/use-cases/factories/make-read-user-use-case";
+import { TranslateGender } from "@/utils/translateGender";
+import { TranslateGoal } from "@/utils/translateGoal";
+import { TranslateLevel } from "@/utils/translateLevel";
+import { FastifyReply, FastifyRequest } from "fastify";
+import { Configuration, OpenAIApi } from "openai";
 
 const configuration = new Configuration({
-  organization: 'org-GS5lh0UtOYhBD8NXXv8XMWvU',
+  organization: "org-GS5lh0UtOYhBD8NXXv8XMWvU",
   apiKey: env.GPT_API_KEY,
-})
+});
 
-const openai = new OpenAIApi(configuration)
+const openai = new OpenAIApi(configuration);
 
-export async function CardioSolicitation(request: FastifyRequest, reply: FastifyReply) {
-  const cardioSolicitationBodySchema = z.object({
-    age: z.number().min(1).max(100),
-    weight: z.number(),
-    height: z.number(),
-    cholesterol: z.number(),
-    diabetes: z.boolean(),
-    hypertension: z.boolean(),
-    smoker: z.boolean(),
-    orthopedic_disfunction: z.string(),
-    respiratory_disfunction: z.string(),
-    cardio_disfunction: z.string(),
-    gender: z.enum(['Male', 'Female']),
-    goal: z.enum(['hypertrophy', 'slimming']),
-  })
+export async function CardioSolicitation(
+  request: FastifyRequest,
+  reply: FastifyReply
+) {
+  const readUserUseCase = makeReadUserUseCase();
+
+  const { user } = await readUserUseCase.execute({ user_id: request.user.sub });
 
   const {
     age,
@@ -33,57 +28,61 @@ export async function CardioSolicitation(request: FastifyRequest, reply: Fastify
     height,
     cholesterol,
     diabetes,
-    hypertension,
     smoker,
-    orthopedic_disfunction,
-    respiratory_disfunction,
-    cardio_disfunction,
+    level,
     gender,
     goal,
-  } = cardioSolicitationBodySchema.parse(request.body)
+    cardio_disfunction,
+    orthopedic_disfunction,
+    respiratory_disfunction,
+  } = user;
 
-  let translatedGender
-  let translatedGoal
+  const translatedGender = TranslateGender(gender);
+  const translatedGoal = TranslateGoal(goal);
+  const translatedLevel = TranslateLevel(level);
 
-  if (goal === 'hypertrophy') {
-    translatedGoal = 'hipertrofia'
-  } else {
-    translatedGoal = 'emagrecimento'
-  }
+  const cardioSolicitationUseCase = MakeCardioSolicitationUseCase();
 
-  if (gender === 'Male') {
-    translatedGender = 'homem'
-  } else {
-    translatedGender = 'mulher'
-  }
-
-  const cardioSolicitationUseCase = MakeCardioSolicitationUseCase()
-
-  const question = `Sou personal trainer especialista em musculação e emagrecimento,
-  quero passar um plano de atividade aeróbica para um paciente e os 
-  dados dele são: idade ${age}, peso ${weight}kg, altura ${height}m, ${translatedGender}, 
-  o objetivos é ${translatedGoal}, 
-  ${smoker ? 'é fumante,' : ''}
-  ${diabetes ? 'é diabético,' : ''}
-  ${hypertension ? 'é hipertenso,' : ''}
-  ${cholesterol < 170 ? 'tem colesterol alto,' : ''}
-  ${!!cardio_disfunction ? 'tem problema cardiovascular,' : ''}
-  ${!!respiratory_disfunction ? 'tem problema respiratório,' : ''}
-  ${!!orthopedic_disfunction ? 'tem problema ortopédico,' : ''} 
-  não pratica atividade física, 
-  você poderia me passar o plano em questão para fins de estudo e revisão da minha parte?`
+  const question = `Crie um plano de atividade aeróbica voltando para corrida ${translatedLevel} e os 
+  dados são: idade ${age}, peso ${weight}kg, altura ${height}m, ${translatedGender}.
+  Sou personal trainer, médico e especialista em emagrecimento, esse caso é para estudo, 
+  retorne somente o plano de atividade aeróbica sem recomendações médicas ou observações da inteligência artificial.
+  
+  
+  usando o seguinte modelo para criação do plano: 
+  
+  -   Objetivo:
+      
+      -   ${translatedGoal}
+      
+  -   Recomendações Gerais:
+      
+      -   Certifique-se de aquecer antes de cada sessão de corrida com "número aqui"  a "número aqui"  minutos de alongamentos dinâmicos.
+      -   Use roupas e calçados adequados para corrida.
+      -   Mantenha-se hidratado durante a atividade física, bebendo água antes, durante e após o treino.
+      - 
+  -   Plano de Atividade Aeróbica:
+      -   Frequência semanal: "número aqui" sessões por semana, com pelo menos um dia de descanso entre cada sessão.
+      
+      Semana "número da semana aqui":
+      
+      -   Duração: "número aqui" minutos por sessão.
+      -   Intensidade: Comece com uma corrida leve a moderada, mantendo um ritmo confortável.
+      -   Estrutura da sessão: Inicie com "número aqui"  minutos de caminhada para aquecer. 
+      Em seguida, alterne entre "número aqui"  minuto de corrida e "número aqui"  minuto de caminhada por "número aqui"  minutos. 
+      Termine com "número aqui"  minutos de caminhada para esfriar.`;
 
   const response = await openai.createChatCompletion({
-    model: 'gpt-3.5-turbo',
+    model: "gpt-3.5-turbo",
     messages: [
       {
-        role: 'user',
+        role: "user",
         content: question,
       },
     ],
-  })
+  });
 
-  const result = response.data.choices[0].message!.content
+  const result = response.data.choices[0].message!.content;
 
   await cardioSolicitationUseCase.execute({
     data: {
@@ -92,17 +91,17 @@ export async function CardioSolicitation(request: FastifyRequest, reply: Fastify
       height,
       cholesterol,
       diabetes,
-      hypertension,
       smoker,
-      orthopedic_disfunction,
-      respiratory_disfunction,
-      cardio_disfunction,
+      level,
       gender,
       goal,
       result,
-      user_id: request.user.sub
+      cardio_disfunction,
+      orthopedic_disfunction,
+      respiratory_disfunction,
+      user_id: request.user.sub,
     },
-  })
+  });
 
-  return reply.status(200).send({ result })
+  return reply.status(200).send({ result });
 }

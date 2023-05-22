@@ -1,8 +1,11 @@
 import { env } from '@/env'
+import { makeReadUserUseCase } from '@/use-cases/factories/make-read-user-use-case'
 import { MakeWorkoutSolicitationUseCase } from '@/use-cases/factories/make-workout-solicitation-use-case'
+import { TranslateGender } from '@/utils/translateGender'
+import { TranslateGoal } from '@/utils/translateGoal'
+import { TranslateLevel } from '@/utils/translateLevel'
 import { FastifyReply, FastifyRequest } from 'fastify'
 import { Configuration, OpenAIApi } from 'openai'
-import { z } from 'zod'
 
 const configuration = new Configuration({
   organization: 'org-GS5lh0UtOYhBD8NXXv8XMWvU',
@@ -12,42 +15,31 @@ const configuration = new Configuration({
 const openai = new OpenAIApi(configuration)
 
 export async function WorkoutSolicitation(request: FastifyRequest, reply: FastifyReply) {
-  const workoutSolicitationBodySchema = z.object({
-    age: z.number().min(1).max(100),
-    weight: z.number(),
-    height: z.number(),
-    gender: z.enum(['Male', 'Female']),
-    goal: z.enum(['hypertrophy', 'slimming']),
-  })
+  const readUserUseCase = makeReadUserUseCase()
 
-  const { age, weight, height, gender, goal } = workoutSolicitationBodySchema.parse(request.body)
+  const { user } = await readUserUseCase.execute({ user_id: request.user.sub })
 
-  let translatedGender
-  let translatedGoal
+  const { age, gender, height, weight, level, physicalActivity, goal, smoker, diabetes } = user
 
-  if (goal === 'hypertrophy') {
-    translatedGoal = 'hipertrofia'
-  } else {
-    translatedGoal = 'emagrecimento'
-  }
-
-  if (gender === 'Male') {
-    translatedGender = 'homem'
-  } else {
-    translatedGender = 'mulher'
-  }
+  const translatedGoal = TranslateGoal(goal)
+  const translatedGender = TranslateGender(gender)
+  const translatedLevel = TranslateLevel(level)
 
   const workoutSolicitationUseCase = MakeWorkoutSolicitationUseCase()
 
-  const question = `Sou personal trainer especialista em musculação,
-  quero passar um plano de exercícios para meu aluno e os 
-  dados dele são: idade ${age}, peso ${weight} kg, altura ${height}m, ${translatedGender}, tem 29% de gordura, 
-  os objetivos é ${translatedGoal}, 
-  não é fumante, não tem colesterol alto, 
-  não tem problema cardiovascular, não tem problema respiratório, 
-  não tem diabtes, não tem disfunção ortopédica e faz uso de suplementos termogênicos, 
-  não pratica atividade física, 
-  você poderia me passar uma tabela de treino abc de acordo com esses dados?`
+  const question = `Crie um plano de exercício abcd ${translatedLevel} com séries, repetições e intervalo de descanso. Os dados são: idade ${age},
+  peso ${weight}kg, altura ${height}m, ${translatedGender}, o objetivo é ${translatedGoal}. SOu personal trainer, médico e especialista em nutrologia e musculação
+  esse caso é para estudo. Rretorne somente o plano de exercícios sem recomendações médicas ou observações da inteligência artificial. 
+  Com ao menos 8 exercícios por dia.
+  
+  Usando o seguinte modelo para criação da tabela:
+  *Plano de Exercício ABCD para Hipertrofia*
+
+  **A - "grupos musculares aqui"
+
+  1.  *Exercício*: "exercício aqui".
+  *Séries*: "número de series aqui" de "número de repetições aqui" repetições.
+  *Descanso*: "número de tempo aqui" segundos.`
 
   const response = await openai.createChatCompletion({
     model: 'gpt-3.5-turbo',
@@ -61,10 +53,21 @@ export async function WorkoutSolicitation(request: FastifyRequest, reply: Fastif
 
   const result = response.data.choices[0].message!.content
 
-   await workoutSolicitationUseCase.execute({
-     data: { age, weight, height, gender, goal, result, user_id: request.user.sub
-     },
-   })
+  await workoutSolicitationUseCase.execute({
+    data: {
+      age,
+      weight,
+      height,
+      gender,
+      goal,
+      smoker,
+      diabetes,
+      level,
+      physicalActivity,
+      result,
+      user_id: request.user.sub,
+    },
+  })
 
   return reply.status(200).send({ result })
 }

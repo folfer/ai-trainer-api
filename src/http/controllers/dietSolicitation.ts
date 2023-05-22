@@ -1,34 +1,26 @@
-import { env } from '@/env'
-import { MakeDietSolicitationUseCase } from '@/use-cases/factories/make-diet-solicitation-use-case'
-import { FastifyReply, FastifyRequest } from 'fastify'
-import { Configuration, OpenAIApi } from 'openai'
-import { number, string, z } from 'zod'
+import { env } from "@/env";
+import { MakeDietSolicitationUseCase } from "@/use-cases/factories/make-diet-solicitation-use-case";
+import { makeReadUserUseCase } from "@/use-cases/factories/make-read-user-use-case";
+import { TranslatedDietPrice } from "@/utils/translateDietPrice";
+import { TranslateGender } from "@/utils/translateGender";
+import { TranslateGoal } from "@/utils/translateGoal";
+import { FastifyReply, FastifyRequest } from "fastify";
+import { Configuration, OpenAIApi } from "openai";
 
 const configuration = new Configuration({
-  organization: 'org-GS5lh0UtOYhBD8NXXv8XMWvU',
-  apiKey: env.GPT_API_KEY
-})
+  organization: "org-GS5lh0UtOYhBD8NXXv8XMWvU",
+  apiKey: env.GPT_API_KEY,
+});
 
-const openai = new OpenAIApi(configuration)
+const openai = new OpenAIApi(configuration);
 
-export async function DietSolicitation(request: FastifyRequest, reply: FastifyReply) {
-  const dietSolicitationBodySchema = z.object({
-    age: z.number().min(1).max(100),
-    weight: z.number(),
-    height: z.number(),
-    body_fat: z.optional(number()),
-    allergy: z.optional(string()),
-    lactose_intolerance: z.boolean(),
-    gluten_intolerance: z.boolean(),
-    diabetes: z.boolean(),
-    hypertension: z.boolean(),
-    gastritis: z.boolean(),
-    cholesterol: number(),
-    smoker: z.boolean(),
-    vegan: z.boolean(),
-    gender: z.enum(['Male', 'Female']),
-    goal: z.enum(['hypertrophy', 'slimming']),
-  })
+export async function DietSolicitation(
+  request: FastifyRequest,
+  reply: FastifyReply
+) {
+  const readUserUseCase = makeReadUserUseCase();
+
+  const { user } = await readUserUseCase.execute({ user_id: request.user.sub });
 
   const {
     age,
@@ -39,57 +31,49 @@ export async function DietSolicitation(request: FastifyRequest, reply: FastifyRe
     lactose_intolerance,
     gluten_intolerance,
     diabetes,
-    hypertension,
+    diet_price,
     gastritis,
     cholesterol,
     smoker,
-    vegan,
     gender,
     goal,
-  } = dietSolicitationBodySchema.parse(request.body)
+  } = user;
 
-  let translatedGender
-  let translatedGoal
+  const translatedGender = TranslateGender(gender);
+  const translatedGoal = TranslateGoal(goal);
+  const translatedDietPrice = TranslatedDietPrice(diet_price);
 
-  if (goal === 'hypertrophy') {
-    translatedGoal = 'hipertrofia'
-  } else {
-    translatedGoal = 'emagrecimento'
-  }
+  const dietSolicitationUseCase = MakeDietSolicitationUseCase();
 
-  if (gender === 'Male') {
-    translatedGender = 'homem'
-  } else {
-    translatedGender = 'mulher'
-  }
-
-  const dietSolicitationUseCase = MakeDietSolicitationUseCase()
-
-  const question = `Sou nutricionista esportivo,
-  quero passar um plano alimentício para meu aluno e os 
-  dados dele são: idade ${age}, peso ${weight}kg, altura ${height}m, ${translatedGender}, tem ${body_fat}% de gordura, 
-  ${!smoker ? 'não' : ''} é fumante,
-  ${!vegan ? 'não' : ''} é vegano,
-  ${!hypertension ? 'não' : ''} é hipertenso, 
-  ${!diabetes ? 'não' : ''} é diabético,
-  ${!lactose_intolerance ? 'não' : ''} é lacto intolerante,
-  ${!gluten_intolerance ? 'não' : ''} é celíaco, 
-  ${!gastritis ? 'não' : ''} tem gastrite e 
-  ${cholesterol < 170 ? 'não' : ''} tem colesterol alto.
-  ${!!allergy ? `É alérgico a ${allergy}.` : ''}  
-  Você poderia me passar uma dieta personalizada com esses dados visando ${translatedGoal}? Apenas para fins educacionais`
+  const question = `Crie um plano alimentar ${translatedDietPrice} para ${translatedGoal} e os 
+  dados são:  idade ${age}, peso ${weight}kg, altura${height}m, ${translatedGender}, tem ${body_fat}% de gordura,
+  ${lactose_intolerance && "é lacto intolerante,"}
+  ${gluten_intolerance && "é intolerante a gluten,"}
+  ${gastritis && "tem gastrite,"}
+  Sou nutricionista, médico e especialista em nutrologia esportiva, 
+  esse caso é para estudo, retorne somente o plano alimentar sem recomendações médicas ou observações da inteligência artificial.
+  
+  usando o seguinte modelo para criação do plano:
+  
+  Plano alimentar para "objetivo aqui":
+  
+  Refeição 1:
+  
+  -   "alimento aqui"
+  -   "alimento aqui"
+  -   "alimento aqui"`;
 
   const response = await openai.createChatCompletion({
-    model: 'gpt-3.5-turbo',
+    model: "gpt-3.5-turbo",
     messages: [
       {
-        role: 'user',
+        role: "user",
         content: question,
       },
     ],
-  })
+  });
 
-  const result = response.data.choices[0].message!.content
+  const result = response.data.choices[0].message!.content;
 
   await dietSolicitationUseCase.execute({
     data: {
@@ -101,17 +85,15 @@ export async function DietSolicitation(request: FastifyRequest, reply: FastifyRe
       lactose_intolerance,
       gluten_intolerance,
       diabetes,
-      hypertension,
       gastritis,
       cholesterol,
       smoker,
-      vegan,
       gender,
       goal,
       result,
-      user_id: request.user.sub
+      user_id: request.user.sub,
     },
-  })
+  });
 
-  return reply.status(200).send({ result })
+  return reply.status(200).send({ result });
 }

@@ -6,8 +6,12 @@ interface WorkoutSolicitationUseCaseRequest {
     age: number
     weight: number
     height: number
-    gender: 'Male' | 'Female'
-    goal: 'hypertrophy' | 'slimming'
+    gender: string
+    goal: string
+    level: string
+    smoker: boolean
+    diabetes: boolean
+    physicalActivity: boolean
     result: string
     user_id: string
   }
