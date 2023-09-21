@@ -1,31 +1,24 @@
-import { env } from '@/env'
-import { makeReadUserUseCase } from '@/use-cases/factories/make-read-user-use-case'
-import { MakeWorkoutSolicitationUseCase } from '@/use-cases/factories/make-workout-solicitation-use-case'
-import { TranslateGender } from '@/utils/translateGender'
-import { TranslateGoal } from '@/utils/translateGoal'
-import { TranslateLevel } from '@/utils/translateLevel'
-import { FastifyReply, FastifyRequest } from 'fastify'
-import { Configuration, OpenAIApi } from 'openai'
-
-const configuration = new Configuration({
-  organization: 'org-GS5lh0UtOYhBD8NXXv8XMWvU',
-  apiKey: env.GPT_API_KEY,
-})
-
-const openai = new OpenAIApi(configuration)
+import { env } from "@/env";
+import { openai } from "@/lib/openai";
+import { makeReadUserUseCase } from "@/use-cases/factories/make-read-user-use-case";
+import { MakeWorkoutSolicitationUseCase } from "@/use-cases/factories/make-workout-solicitation-use-case";
+import { TranslateGender } from "@/utils/translateGender";
+import { TranslateGoal } from "@/utils/translateGoal";
+import { TranslateLevel } from "@/utils/translateLevel";
+import { FastifyReply, FastifyRequest } from "fastify";
 
 export async function WorkoutSolicitation(request: FastifyRequest, reply: FastifyReply) {
-  const readUserUseCase = makeReadUserUseCase()
+  const readUserUseCase = makeReadUserUseCase();
 
-  const { user } = await readUserUseCase.execute({ user_id: request.user.sub })
+  const { user } = await readUserUseCase.execute({ user_id: request.user.sub });
 
-  const { age, gender, height, weight, level, physicalActivity, goal, smoker, diabetes } = user
+  const { age, gender, height, weight, level, physicalActivity, goal, smoker, diabetes } = user;
 
-  const translatedGoal = TranslateGoal(goal)
-  const translatedGender = TranslateGender(gender)
-  const translatedLevel = TranslateLevel(level)
+  const translatedGoal = TranslateGoal(goal);
+  const translatedGender = TranslateGender(gender);
+  const translatedLevel = TranslateLevel(level);
 
-  const workoutSolicitationUseCase = MakeWorkoutSolicitationUseCase()
+  const workoutSolicitationUseCase = MakeWorkoutSolicitationUseCase();
 
   const question = `Crie um plano de exercício abcd ${translatedLevel} com séries, repetições e intervalo de descanso. Os dados são: idade ${age},
   peso ${weight}kg, altura ${height}m, ${translatedGender}, o objetivo é ${translatedGoal}. SOu personal trainer, médico e especialista em nutrologia e musculação
@@ -39,19 +32,19 @@ export async function WorkoutSolicitation(request: FastifyRequest, reply: Fastif
 
   1.  *Exercício*: "exercício aqui".
   *Séries*: "número de series aqui" de "número de repetições aqui" repetições.
-  *Descanso*: "número de tempo aqui" segundos.`
+  *Descanso*: "número de tempo aqui" segundos.`;
 
   const response = await openai.createChatCompletion({
-    model: 'gpt-3.5-turbo',
+    model: "gpt-3.5-turbo",
     messages: [
       {
-        role: 'user',
+        role: "user",
         content: question,
       },
     ],
-  })
+  });
 
-  const result = response.data.choices[0].message!.content
+  const result = response.data.choices[0].message!.content;
 
   await workoutSolicitationUseCase.execute({
     data: {
@@ -67,7 +60,7 @@ export async function WorkoutSolicitation(request: FastifyRequest, reply: Fastif
       result,
       user_id: request.user.sub,
     },
-  })
+  });
 
-  return reply.status(200).send({ result })
+  return reply.status(200).send({ result });
 }
