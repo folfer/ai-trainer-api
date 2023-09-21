@@ -1,0 +1,7 @@
+# @name workoutSolicitation
+POST http://localhost:3333/workouts
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4Zjc5NWFkMC1lZjExLTQyMzQtYTQyOS1hNGExOTU2ZjY3MWQiLCJpYXQiOjE2OTUyNjAzOTN9.5xvT1VlyJawnxyp5U0UWmopRSQE0s8NQtI2f7yGa1vM
+ 
+{
+}

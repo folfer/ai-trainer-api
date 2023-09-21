@@ -1,43 +1,18 @@
 import { env } from "@/env";
+import { openai } from "@/lib/openai";
 import { MakeDietSolicitationUseCase } from "@/use-cases/factories/make-diet-solicitation-use-case";
 import { makeReadUserUseCase } from "@/use-cases/factories/make-read-user-use-case";
 import { TranslatedDietPrice } from "@/utils/translateDietPrice";
 import { TranslateGender } from "@/utils/translateGender";
 import { TranslateGoal } from "@/utils/translateGoal";
 import { FastifyReply, FastifyRequest } from "fastify";
-import { Configuration, OpenAIApi } from "openai";
 
-const configuration = new Configuration({
-  organization: "org-GS5lh0UtOYhBD8NXXv8XMWvU",
-  apiKey: env.GPT_API_KEY,
-});
-
-const openai = new OpenAIApi(configuration);
-
-export async function DietSolicitation(
-  request: FastifyRequest,
-  reply: FastifyReply
-) {
+export async function DietSolicitation(request: FastifyRequest, reply: FastifyReply) {
   const readUserUseCase = makeReadUserUseCase();
 
   const { user } = await readUserUseCase.execute({ user_id: request.user.sub });
 
-  const {
-    age,
-    weight,
-    height,
-    body_fat,
-    allergy,
-    lactose_intolerance,
-    gluten_intolerance,
-    diabetes,
-    diet_price,
-    gastritis,
-    cholesterol,
-    smoker,
-    gender,
-    goal,
-  } = user;
+  const { age, weight, height, body_fat, allergy, lactose_intolerance, gluten_intolerance, diabetes, diet_price, gastritis, cholesterol, smoker, gender, goal } = user;
 
   const translatedGender = TranslateGender(gender);
   const translatedGoal = TranslateGoal(goal);
@@ -63,7 +38,7 @@ export async function DietSolicitation(
   -   "alimento aqui"
   -   "alimento aqui"`;
 
-  const response = await openai.createChatCompletion({
+  const response = await openai.chat.completions.create({
     model: "gpt-3.5-turbo",
     messages: [
       {
@@ -73,15 +48,19 @@ export async function DietSolicitation(
     ],
   });
 
-  const result = response.data.choices[0].message!.content;
+  const result = response.choices[0].message.content;
+
+  if (!result) {
+    return reply.status(400).send({ message: "There was a problem processing your informations" });
+  }
 
   await dietSolicitationUseCase.execute({
     data: {
       age,
       weight,
       height,
-      body_fat,
-      allergy,
+      body_fat: body_fat ? body_fat : undefined,
+      allergy: allergy ? allergy : undefined,
       lactose_intolerance,
       gluten_intolerance,
       diabetes,

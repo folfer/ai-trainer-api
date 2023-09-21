@@ -1,4 +1,3 @@
-import { env } from "@/env";
 import { openai } from "@/lib/openai";
 import { makeReadUserUseCase } from "@/use-cases/factories/make-read-user-use-case";
 import { MakeWorkoutSolicitationUseCase } from "@/use-cases/factories/make-workout-solicitation-use-case";
@@ -34,7 +33,7 @@ export async function WorkoutSolicitation(request: FastifyRequest, reply: Fastif
   *Séries*: "número de series aqui" de "número de repetições aqui" repetições.
   *Descanso*: "número de tempo aqui" segundos.`;
 
-  const response = await openai.createChatCompletion({
+  const response = await openai.chat.completions.create({
     model: "gpt-3.5-turbo",
     messages: [
       {
@@ -44,7 +43,11 @@ export async function WorkoutSolicitation(request: FastifyRequest, reply: Fastif
     ],
   });
 
-  const result = response.data.choices[0].message!.content;
+  const result = response.choices[0].message.content;
+
+  if (!result) {
+    return reply.status(400).send({ message: "There was a problem processing your informations" });
+  }
 
   await workoutSolicitationUseCase.execute({
     data: {

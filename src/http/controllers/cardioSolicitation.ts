@@ -1,41 +1,18 @@
 import { env } from "@/env";
+import { openai } from "@/lib/openai";
 import { MakeCardioSolicitationUseCase } from "@/use-cases/factories/make-cardio-solicitation-use-case";
 import { makeReadUserUseCase } from "@/use-cases/factories/make-read-user-use-case";
 import { TranslateGender } from "@/utils/translateGender";
 import { TranslateGoal } from "@/utils/translateGoal";
 import { TranslateLevel } from "@/utils/translateLevel";
 import { FastifyReply, FastifyRequest } from "fastify";
-import { Configuration, OpenAIApi } from "openai";
 
-const configuration = new Configuration({
-  organization: "org-GS5lh0UtOYhBD8NXXv8XMWvU",
-  apiKey: env.GPT_API_KEY,
-});
-
-const openai = new OpenAIApi(configuration);
-
-export async function CardioSolicitation(
-  request: FastifyRequest,
-  reply: FastifyReply
-) {
+export async function CardioSolicitation(request: FastifyRequest, reply: FastifyReply) {
   const readUserUseCase = makeReadUserUseCase();
 
   const { user } = await readUserUseCase.execute({ user_id: request.user.sub });
 
-  const {
-    age,
-    weight,
-    height,
-    cholesterol,
-    diabetes,
-    smoker,
-    level,
-    gender,
-    goal,
-    cardio_disfunction,
-    orthopedic_disfunction,
-    respiratory_disfunction,
-  } = user;
+  const { age, weight, height, cholesterol, diabetes, smoker, level, gender, goal, cardio_disfunction, orthopedic_disfunction, respiratory_disfunction } = user;
 
   const translatedGender = TranslateGender(gender);
   const translatedGoal = TranslateGoal(goal);
@@ -72,7 +49,7 @@ export async function CardioSolicitation(
       Em seguida, alterne entre "número aqui"  minuto de corrida e "número aqui"  minuto de caminhada por "número aqui"  minutos. 
       Termine com "número aqui"  minutos de caminhada para esfriar.`;
 
-  const response = await openai.createChatCompletion({
+  const response = await openai.chat.completions.create({
     model: "gpt-3.5-turbo",
     messages: [
       {
@@ -82,7 +59,11 @@ export async function CardioSolicitation(
     ],
   });
 
-  const result = response.data.choices[0].message!.content;
+  const result = response.choices[0].message.content;
+
+  if (!result) {
+    return reply.status(400).send({ message: "There was a problem processing your informations" });
+  }
 
   await cardioSolicitationUseCase.execute({
     data: {

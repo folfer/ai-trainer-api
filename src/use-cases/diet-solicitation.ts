@@ -15,7 +15,6 @@ interface dietSolicitationUseCaseRequest {
     gastritis: boolean;
     cholesterol: number;
     smoker: boolean;
-    vegan: boolean;
     gender: string;
     goal: string;
     diet_price: string;
@@ -31,9 +30,7 @@ interface dietSolicitationUseCaseResponse {
 export class DietSolicitationUseCase {
   constructor(private solicitationsRepository: DietSolicitationsRepository) {}
 
-  async execute({
-    data,
-  }: dietSolicitationUseCaseRequest): Promise<dietSolicitationUseCaseResponse> {
+  async execute({ data }: dietSolicitationUseCaseRequest): Promise<dietSolicitationUseCaseResponse> {
     const dietSolicitation = await this.solicitationsRepository.create(data);
 
     return { dietSolicitation };
