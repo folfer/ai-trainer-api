@@ -1,7 +1,107 @@
+@baseUrl = http://localhost:3333
+@authToken = {{authenticate.response.body.token}}
+
+
+# @name register
+POST http://localhost:3333/users
+Content-Type: application/json
+
+{
+  "name": "Carlão2",
+  "email": "carlao2@gmail.com",
+  "password": "123456",
+  "age": "24",
+  "height": "165",
+  "weight": "77",
+  "goal": "hypertrophy",
+  "gender": "male",
+  "level": "intermediary",
+  "smoker": false,
+  "diabetes": false,
+  "physicalActivity": false,
+  "lactose_intolerance": false,
+  "gluten_intolerance": false,
+  "gastritis": false,
+  "cholesterol": 150,
+  "body_fat": 17,
+  "allergy": "",
+  "diet_price": "cheap",
+  "cardio_disfunction": "",
+  "orthopedic_disfunction": "",
+  "respiratory_disfunction": ""
+}
+
+###
+
+# @name authenticate
+POST http://localhost:3333/sessions
+Content-Type: application/json
+
+{
+  "email": "carlao@gmail.com",
+  "password": "123456"
+}
+
+###
+
 # @name workoutSolicitation
 POST http://localhost:3333/workouts
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4Zjc5NWFkMC1lZjExLTQyMzQtYTQyOS1hNGExOTU2ZjY3MWQiLCJpYXQiOjE2OTUyNjAzOTN9.5xvT1VlyJawnxyp5U0UWmopRSQE0s8NQtI2f7yGa1vM
+Authorization: Bearer {{authToken}}
+ 
+{
+}
+
+
+###
+
+# @name workoutSolicitation
+GET http://localhost:3333/workouts
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+ 
+{
+}
+
+
+###
+
+# @name dietSolicitation
+POST http://localhost:3333/diets
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+ 
+{
+}
+
+
+###
+
+# @name dietSolicitation
+GET http://localhost:3333/diets
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+ 
+{
+}
+
+
+###
+
+# @name cardioSolicitation
+POST http://localhost:3333/cardios
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
+ 
+{
+}
+
+###
+
+# @name cardioSolicitation
+GET http://localhost:3333/cardios
+Content-Type: application/json
+Authorization: Bearer {{authToken}}
  
 {
 }

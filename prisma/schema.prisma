@@ -72,7 +72,6 @@ model DietSolicitation {
   lactose_intolerance Boolean
   gluten_intolerance  Boolean
   diabetes            Boolean
-  hypertension        Boolean
   gastritis           Boolean
   cholesterol         Float
   smoker              Boolean

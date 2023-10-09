@@ -11,7 +11,6 @@ interface dietSolicitationUseCaseRequest {
     lactose_intolerance: boolean;
     gluten_intolerance: boolean;
     diabetes: boolean;
-    hypertension: boolean;
     gastritis: boolean;
     cholesterol: number;
     smoker: boolean;

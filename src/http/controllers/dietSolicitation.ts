@@ -69,6 +69,7 @@ export async function DietSolicitation(request: FastifyRequest, reply: FastifyRe
       smoker,
       gender,
       goal,
+      diet_price,
       result,
       user_id: request.user.sub,
     },
